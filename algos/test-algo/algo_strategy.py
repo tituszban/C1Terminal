@@ -4,7 +4,11 @@ import math
 import warnings
 from sys import maxsize
 
+import numpy as np
+import tensorflow as tf
+
 import logging
+import json
 
 logger = logging.getLogger('spam_application')
 logger.setLevel(logging.DEBUG)
@@ -35,7 +39,6 @@ class AlgoStrategy(gamelib.AlgoCore):
         random.seed()
 
     def on_game_start(self, config):
-        logger.info("==============> CONFIG: {}".format(config))
         """ 
         Read in config and perform any initial setup here 
         """
@@ -49,6 +52,14 @@ class AlgoStrategy(gamelib.AlgoCore):
         EMP = config["unitInformation"][4]["shorthand"]
         SCRAMBLER = config["unitInformation"][5]["shorthand"]
 
+        logger.info("{0} NEW GAME {0}".format(''.join(["=" for _ in range(10)])))
+
+
+        # arr = np.zeros((5, 5))
+        # logger.info("zeros: {}".format(arr))
+        # logger.info("Tensorflow version: {}".format(tf.__version__))
+
+
 
     def on_turn(self, turn_state):
         """
@@ -59,11 +70,40 @@ class AlgoStrategy(gamelib.AlgoCore):
         game engine.
         """
         game_state = gamelib.GameState(self.config, turn_state)
-        logger.info("==============> GAME STATE: bits: {} TURN_STATE: {}".format(game_state.BITS, turn_state))
+
+        logger.info("\nNew turn")
+        state = json.loads(turn_state)
+
+        logger.info("TURN STATE: keys: {}".format(list(state.keys())))
+        logger.info("TURN STATE: turnInfo: {}".format(state["turnInfo"]))
+        logger.info("TURN STATE: p1Stats: {}".format(state["p1Stats"]))
+        for i in range(len(state["p1Units"])):
+            logger.info(
+                "TURN STATE: p1Units[{}]: {}".format(self.config["unitInformation"][i]["display"], state["p1Units"][i]))
+        logger.info("TURN STATE: p2Stats: {}".format(state["p2Stats"]))
+        for i in range(len(state["p2Units"])):
+            logger.info(
+                "TURN STATE: p2Units[{}]: {}".format(self.config["unitInformation"][i]["display"], state["p2Units"][i]))
+        logger.info("TURN STATE: events: {}".format(state["events"]))
+
         gamelib.debug_write('Performing turn {} of your custom algo strategy'.format(game_state.turn_number))
         #game_state.suppress_warnings(True)  #Uncomment this line to suppress warnings.
 
+        logger.info("GAME STATE: bits: {}, cores: {}, my_health: {}, enemy_health: {}".format(
+            game_state.get_resource(game_state.BITS),
+            game_state.get_resource(game_state.CORES),
+            game_state.my_health,
+            game_state.enemy_health
+        ))
+
         self.starter_strategy(game_state)
+
+        logger.info("GAME STATE': bits: {}, cores: {}, my_health: {}, enemy_health: {}".format(
+            game_state.get_resource(game_state.BITS),
+            game_state.get_resource(game_state.CORES),
+            game_state.my_health,
+            game_state.enemy_health
+        ))
 
         game_state.submit_turn()
 
